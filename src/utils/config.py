@@ -1,7 +1,11 @@
 from pathlib import Path
+try:
+    from .config_helper import find_project_root
+except ImportError:
+    from config_helper import find_project_root
 
 # Base of the project
-BASE_DIR = Path(__file__).parent.parent.parent
+BASE_DIR = find_project_root()
 
 # # .env file loading
 # dotenv_path = BASE_DIR / ".env"
