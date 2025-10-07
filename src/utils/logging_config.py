@@ -1,101 +1,147 @@
 import logging
 import sys
+from typing import Type
 
 from logging_formatters import ColoredFormatter, FullColoredFormatter
 
-# Success level for logging (custom level)
 SUCCESS_LEVEL = 69
 logging.addLevelName(SUCCESS_LEVEL, "SUCCESS")
 
 
-def success(self, message, *args, stacklevel=3, **kwargs):
-    if self.isEnabledFor(SUCCESS_LEVEL):
-        self.log(SUCCESS_LEVEL, message, *args,
-                 stacklevel=stacklevel, **kwargs)
+class CustomLogger(logging.Logger):
+    """Custom logger with a SUCCESS level."""
+
+    def success(self, message: str, *args, **kwargs):
+        """Log a message with SUCCESS level"""
+        if self.isEnabledFor(SUCCESS_LEVEL):
+            self._log(SUCCESS_LEVEL, message, args, **kwargs)
 
 
-# Add the success method to the Logger class
-setattr(logging.Logger, "success", success)
-
-
-# Adding a module-level function for logging
-def logging_success(message, *args, **kwargs):
-    logging.getLogger().success(message, *args, **kwargs)
-
-
-logging.success = logging_success
-
-
-def setup_logging( level: int = logging.INFO, full_color: bool = False, include_function: bool = False) -> None:
-    """
-    Setup logging configuration with colored output and optional function names.
-
-    Args:
-        level (int, optional): Logging level, by default logging.INFO
-        full_color (bool, optional): Enable full color output, by default False
-        include_function (bool, optional): Include function name in logs, by default False
-
-    Returns:
-        None
-
-    Example:
-        ```python
-        import logging
-        from utils.logging_config import setup_logging
-        setup_logging(level=logging.DEBUG, full_color=True, include_function=True)
-        logger = logging.getLogger(__name__)
-        logger.debug("This is a debug message.")
-        ```
-    """
+def _create_handler(full_color: bool, include_function: bool) -> logging.Handler:
+    """Create and configure a StreamHandler with the chosen formatter."""
     handler = logging.StreamHandler(sys.stdout)
-
     if full_color:
         handler.setFormatter(FullColoredFormatter(
             include_function=include_function))
     else:
         handler.setFormatter(ColoredFormatter(
             include_function=include_function))
+    return handler
 
-    # Configure root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(level)
-    root_logger.handlers.clear()
-    root_logger.addHandler(handler)
 
-    # Reduce noise from external libraries
-    logging.getLogger("aio_pika").setLevel(logging.WARNING)
-    logging.getLogger("opentelemetry").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
+def setup_logging(
+    level: int = logging.INFO,
+    full_color: bool = False,
+    include_function: bool = False,
+    logger_class: Type[logging.Logger] = CustomLogger,
+    logger_name: str = "app",
+) -> CustomLogger | logging.Logger:
+    """
+    Configure and return a logger.
 
+    Args:
+        level: Logging level (default=logging.INFO)
+        full_color: Use full color formatting (default=False)
+        include_function: Include function names (default=False)
+        logger_class: Logger class to use (default=CustomLogger)
+        logger_name: Logger instance name (default="app")
+
+    Returns:
+        CustomLogger | logging.Logger: Configured logger instance
+
+    Example:
+        ```python
+        from utils.logging_config import setup_logging, CustomLogger
+
+        # Use custom logger with success() method
+        logger = setup_logging(level=logging.DEBUG, logger_class=CustomLogger)
+        logger.success("This is a success message!")
+
+        # Use default Python logger
+        logger = setup_logging(logger_class=logging.Logger)
+        logger.info("Standard logger without success method")
+
+        # Direct class usage
+        logger = setup_logging(logger_class=CustomLogger, logger_name="my_app")
+        logger.success("Direct class usage!")
+        ```
+    """
+    if not isinstance(logger_class, type) or not issubclass(logger_class, logging.Logger):
+        print(f"Unknown logger_class ({logger_class}) provided, falling back to logging.Logger")
+        logger_class = logging.Logger
+
+    # Create logger instance
+    logging.setLoggerClass(logger_class)
+    logger = logging.getLogger(logger_name)
+
+    logger.setLevel(level)
+    logger.handlers.clear()
+
+    # Set up handler
+    if not logger.handlers:
+        handler = _create_handler(full_color, include_function)
+        logger.addHandler(handler)
+
+    # Initial log message
+    config_msg = "Logging configured"
     if include_function:
-        logging.success("🎨 Colored logging configured with function names")
+        config_msg += " with function names"
+    config_msg += f" successfully ✅"
+
+    if hasattr(logger, "success"):
+        logger.success(config_msg)
     else:
-        logging.success("🎨 Colored logging configured")
+        logger.info(config_msg)
+
+    return logger
 
 
-def logging_test_func():
-    """
-    Test function to demonstrate logging setup.
-    This function will log messages at various levels.
-    """
-    logging.debug("This is a debug message.")
-    logging.info("This is an info message.")
-    logging.success("This is a success message!")
-    logging.warning("This is a warning message.")
-    logging.error("This is an error message.")
-    logging.critical("This is a critical message.")
+def logging_test_func(logger: logging.Logger):
+    logger.debug("This is a debug message.")
+    logger.info("This is an info message.")
+
+    # Use success() only if available
+    if hasattr(logger, "success"):
+        logger.success("This is a success message!")
+
+    logger.warning("This is a warning message.")
+    logger.error("This is an error message.")
+    logger.critical("This is a critical message.")
 
 
 if __name__ == "__main__":
-    print("Regular color logging:")
-    setup_logging(level=logging.DEBUG)
-    logging_test_func()
+    print("Regular color logging (CustomLogger):")
+    logger = setup_logging(level=logging.DEBUG, logger_class=CustomLogger)
+    logging_test_func(logger)
 
-    print("\nFull color logging:")
-    logging.getLogger().handlers.clear()
-    setup_logging(level=logging.DEBUG, full_color=True)
-    logging_test_func()
+    print("\n" + "=" * 50)
+    print("Full color logging (CustomLogger):")
+    logger = setup_logging(level=logging.DEBUG,
+                           full_color=True,
+                           logger_class=CustomLogger)
+    logging_test_func(logger)
 
-    print("\nFull color logging with tracing and function names:")
-    setup_logging(level=logging.DEBUG, full_color=True, include_function=True)
-    logging_test_func()
+    print("\n" + "=" * 50)
+    print("Full color logging with tracing and function names (CustomLogger):")
+    logger = setup_logging(level=logging.DEBUG,
+                           full_color=True,
+                           include_function=True,
+                           logger_class=CustomLogger)
+    logging_test_func(logger)
+
+    print("\n" + "=" * 50)
+    print("Default Python logger (fallback, no success method):")
+    logger = setup_logging(level=logging.DEBUG, logger_class=logging.Logger)
+    logging_test_func(logger)
+
+    print("\n" + "=" * 50)
+    print("Direct class usage:")
+    logger = setup_logging(level=logging.DEBUG,
+                           logger_class=CustomLogger,
+                           logger_name="direct")
+    logging_test_func(logger)
+
+    print("\n" + "=" * 50)
+    print("Unknown logger type (fallback to logging.Logger):")
+    logger = setup_logging(level=logging.DEBUG, logger_class="unknown")
+    logging_test_func(logger)
