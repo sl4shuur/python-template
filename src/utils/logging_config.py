@@ -1,9 +1,7 @@
 import logging
 import sys
-import colorama
-from colorama import Fore, Style
 
-colorama.init()
+from logging_formatters import ColoredFormatter, FullColoredFormatter
 
 # Success level for logging (custom level)
 SUCCESS_LEVEL = 69
@@ -12,7 +10,8 @@ logging.addLevelName(SUCCESS_LEVEL, "SUCCESS")
 
 def success(self, message, *args, stacklevel=3, **kwargs):
     if self.isEnabledFor(SUCCESS_LEVEL):
-        self.log(SUCCESS_LEVEL, message, *args, stacklevel=stacklevel, **kwargs)
+        self.log(SUCCESS_LEVEL, message, *args,
+                 stacklevel=stacklevel, **kwargs)
 
 
 # Add the success method to the Logger class
@@ -27,84 +26,7 @@ def logging_success(message, *args, **kwargs):
 logging.success = logging_success
 
 
-def hex_to_ansi(hex_color: str) -> str:
-    hex_color = hex_color.lstrip("#")
-    r, g, b = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
-    return f"\033[38;2;{r};{g};{b}m"
-
-
-COLORS = {
-    "DEBUG": hex_to_ansi("#3ACEFF"),  # Sky Blue
-    "INFO": hex_to_ansi("#A1F7FF"),  # Light Blue
-    "SUCCESS": hex_to_ansi("#69FE69"),  # Bright Green
-    "WARNING": hex_to_ansi("#FDF32F"),  # Yellow
-    "ERROR": hex_to_ansi("#F61C1C"),  # Red
-    "CRITICAL": hex_to_ansi("#FF6EFF"),  # Magenta
-}
-
-
-class ColoredFormatter(logging.Formatter):
-    """Colored formatter with file path, line number, and function name support"""
-
-    def __init__(self, include_function=False):
-        super().__init__()
-        self.include_function = include_function
-
-    def format(self, record):
-        log_color = COLORS.get(record.levelname, Fore.WHITE)
-        colored_time = f"{log_color}{self.formatTime(record, '%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}"
-        colored_level = f"{log_color}{record.levelname}{Style.RESET_ALL}"
-
-        # Build the formatted message
-        message_parts = []
-
-        # Add timestamp
-        message_parts.append(f"[{colored_time}]")
-
-        # Add file path, line number, and function name if enabled
-        if self.include_function:
-            file_info = f"{record.pathname}:{record.lineno} -> {record.funcName}"
-            function_info = f"{hex_to_ansi('#FF9500')}[{file_info}]{Style.RESET_ALL}"
-            message_parts.append(function_info)
-
-        # Combine all parts
-        header = " ".join(message_parts)
-        formatted_record = f"{header}\n{colored_level}: {record.getMessage()}"
-
-        return formatted_record
-
-
-class FullColoredFormatter(logging.Formatter):
-    """Full colored formatter with file path, line number, and function name support"""
-
-    def __init__(self, include_function=False):
-        super().__init__()
-        self.include_function = include_function
-
-    def format(self, record):
-        log_color = COLORS.get(record.levelname, Fore.WHITE)
-
-        # Build the formatted message
-        message_parts = []
-        message_parts.append(f"[{self.formatTime(record, '%Y-%m-%d %H:%M:%S')}]")
-
-        # Add file path, line number, and function name if enabled
-        if self.include_function:
-            file_info = f"{record.pathname}:{record.lineno} -> {record.funcName}"
-            message_parts.append(f"[{file_info}]")
-
-        # Combine all parts
-        header = " ".join(message_parts)
-        formatted_record = f"\n{header}\n{record.levelname}: {record.getMessage()}"
-
-        return f"{log_color}{formatted_record}{Style.RESET_ALL}"
-
-
-def setup_logging(
-    level: int = logging.INFO,
-    full_color: bool = False,
-    include_function: bool = False,
-) -> None:
+def setup_logging( level: int = logging.INFO, full_color: bool = False, include_function: bool = False) -> None:
     """
     Setup logging configuration with colored output and optional function names.
 
@@ -128,9 +50,11 @@ def setup_logging(
     handler = logging.StreamHandler(sys.stdout)
 
     if full_color:
-        handler.setFormatter(FullColoredFormatter(include_function=include_function))
+        handler.setFormatter(FullColoredFormatter(
+            include_function=include_function))
     else:
-        handler.setFormatter(ColoredFormatter(include_function=include_function))
+        handler.setFormatter(ColoredFormatter(
+            include_function=include_function))
 
     # Configure root logger
     root_logger = logging.getLogger()
