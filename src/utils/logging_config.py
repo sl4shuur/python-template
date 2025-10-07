@@ -2,8 +2,8 @@ import logging
 import sys
 from typing import Type
 
-from logging_formatters import ColoredFormatter, FullColoredFormatter
-from loggers import CustomLogger
+from .logging_formatters import ColoredFormatter, FullColoredFormatter
+from .loggers import CustomLogger
 
 
 def _create_handler(full_color: bool, include_function: bool) -> logging.Handler:
