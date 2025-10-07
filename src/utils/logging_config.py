@@ -3,18 +3,7 @@ import sys
 from typing import Type
 
 from logging_formatters import ColoredFormatter, FullColoredFormatter
-
-SUCCESS_LEVEL = 69
-logging.addLevelName(SUCCESS_LEVEL, "SUCCESS")
-
-
-class CustomLogger(logging.Logger):
-    """Custom logger with a SUCCESS level."""
-
-    def success(self, message: str, *args, **kwargs):
-        """Log a message with SUCCESS level"""
-        if self.isEnabledFor(SUCCESS_LEVEL):
-            self._log(SUCCESS_LEVEL, message, args, **kwargs)
+from loggers import CustomLogger
 
 
 def _create_handler(full_color: bool, include_function: bool) -> logging.Handler:
@@ -96,7 +85,7 @@ def setup_logging(
     return logger
 
 
-def logging_test_func(logger: logging.Logger):
+def _logging_test(logger: logging.Logger):
     logger.debug("This is a debug message.")
     logger.info("This is an info message.")
 
@@ -112,14 +101,14 @@ def logging_test_func(logger: logging.Logger):
 if __name__ == "__main__":
     print("Regular color logging (CustomLogger):")
     logger = setup_logging(level=logging.DEBUG, logger_class=CustomLogger)
-    logging_test_func(logger)
+    _logging_test(logger)
 
     print("\n" + "=" * 50)
     print("Full color logging (CustomLogger):")
     logger = setup_logging(level=logging.DEBUG,
                            full_color=True,
                            logger_class=CustomLogger)
-    logging_test_func(logger)
+    _logging_test(logger)
 
     print("\n" + "=" * 50)
     print("Full color logging with tracing and function names (CustomLogger):")
@@ -127,21 +116,21 @@ if __name__ == "__main__":
                            full_color=True,
                            include_function=True,
                            logger_class=CustomLogger)
-    logging_test_func(logger)
+    _logging_test(logger)
 
     print("\n" + "=" * 50)
     print("Default Python logger (fallback, no success method):")
     logger = setup_logging(level=logging.DEBUG, logger_class=logging.Logger)
-    logging_test_func(logger)
+    _logging_test(logger)
 
     print("\n" + "=" * 50)
     print("Direct class usage:")
     logger = setup_logging(level=logging.DEBUG,
                            logger_class=CustomLogger,
                            logger_name="direct")
-    logging_test_func(logger)
+    _logging_test(logger)
 
     print("\n" + "=" * 50)
     print("Unknown logger type (fallback to logging.Logger):")
     logger = setup_logging(level=logging.DEBUG, logger_class="unknown")
-    logging_test_func(logger)
+    _logging_test(logger)
