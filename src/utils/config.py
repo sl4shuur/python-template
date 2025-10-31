@@ -1,4 +1,3 @@
-from pathlib import Path
 try:
     from .config_helper import find_project_root
 except ImportError:
