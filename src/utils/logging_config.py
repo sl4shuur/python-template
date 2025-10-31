@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Type
+from typing import Type, cast
 
 try:
     from .logging_formatters import ColoredFormatter, FullColoredFormatter
@@ -26,7 +26,7 @@ def setup_logging(
     level: int = logging.INFO,
     full_color: bool = False,
     include_function: bool = False,
-    logger_class: Type[logging.Logger] = CustomLogger,
+    logger_class: Type[logging.Logger] | None = CustomLogger,
     logger_name: str = "app",
 ) -> CustomLogger | logging.Logger:
     """
@@ -44,10 +44,12 @@ def setup_logging(
 
     Example:
         ```python
+        from typing import cast
         from utils.logging_config import setup_logging, CustomLogger
 
         # Use custom logger with success() method
         logger = setup_logging(level=logging.DEBUG, logger_class=CustomLogger)
+        logger = cast(CustomLogger, logger)  # Type hinting
         logger.success("This is a success message!")
 
         # Use default Python logger
@@ -81,7 +83,8 @@ def setup_logging(
         config_msg += " with function names"
     config_msg += f" successfully ✅"
 
-    if hasattr(logger, "success"):
+    if isinstance(logger, CustomLogger):
+        logger = cast(CustomLogger, logger)  # Type hinting
         logger.success(config_msg)
     else:
         logger.info(config_msg)
@@ -94,7 +97,8 @@ def _logging_test(logger: logging.Logger):
     logger.info("This is an info message.")
 
     # Use success() only if available
-    if hasattr(logger, "success"):
+    if isinstance(logger, CustomLogger):
+        logger = cast(CustomLogger, logger)  # Type hinting
         logger.success("This is a success message!")
 
     logger.warning("This is a warning message.")
@@ -136,5 +140,5 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 50)
     print("Unknown logger type (fallback to logging.Logger):")
-    logger = setup_logging(level=logging.DEBUG, logger_class="unknown")
+    logger = setup_logging(level=logging.DEBUG, logger_class=None)
     _logging_test(logger)
