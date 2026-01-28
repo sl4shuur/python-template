@@ -14,11 +14,11 @@ def _create_handler(full_color: bool, include_function: bool) -> logging.Handler
     """Create and configure a StreamHandler with the chosen formatter."""
     handler = logging.StreamHandler(sys.stdout)
     if full_color:
-        handler.setFormatter(FullColoredFormatter(
-            include_function=include_function))
+        FormatterClass = FullColoredFormatter
     else:
-        handler.setFormatter(ColoredFormatter(
-            include_function=include_function))
+        FormatterClass = ColoredFormatter
+    formatter = FormatterClass(include_function=include_function)
+    handler.setFormatter(formatter)
     return handler
 
 

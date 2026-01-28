@@ -1,10 +1,8 @@
 from src.utils.logging_config import setup_logging, CustomLogger
-from typing import cast
 
 
 def main():
-    logger = setup_logging(full_color=True, include_function=True)
-    logger = cast(CustomLogger, logger)  # Type hinting
+    logger: CustomLogger = setup_logging(full_color=True, include_function=True)  # type: ignore
     logger.success("Logging configuration test completed.")
 
 
