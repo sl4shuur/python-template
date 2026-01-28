@@ -1,3 +1,6 @@
+import os
+from dotenv import load_dotenv
+
 try:
     from .config_helper import find_project_root
 except ImportError:
@@ -12,7 +15,9 @@ DATA_DIR = BASE_DIR / "data"
 # if not dotenv_path.exists():
 #     raise FileNotFoundError(f"Environment file not found: {dotenv_path}")
 
-# dotenv.load_dotenv(dotenv_path)
+# load_dotenv(dotenv_path)
+
+# SOME_API_KEY = os.getenv("SOME_API_KEY")
 
 # check if the directories exist, if not create them
 for directory in [DATA_DIR]:
