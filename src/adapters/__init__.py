@@ -1,3 +1,3 @@
-from .logger import CustomLogger
+from .loggers import CustomLogger, EvalLogger
 
-__all__ = ["CustomLogger"]
+__all__ = ["CustomLogger", "EvalLogger"]
