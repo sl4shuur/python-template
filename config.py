@@ -1,26 +1,45 @@
-"""Typed configuration via pydantic-settings."""
+"""Application settings and runtime preparation helpers."""
 
+from functools import lru_cache
 from pathlib import Path
 from pprint import pprint
+
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+
+
 class Config(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_prefix="APP_",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
-    # Directories
-    root_dir: Path = Path()
-    log_dir: Path = root_dir / "logs"
+    app_name: str = "app"
 
-    directories: list[Path] = [root_dir, log_dir]
+    root_dir: Path = PROJECT_ROOT
+    log_dir: Path = PROJECT_ROOT / "logs"
+    directories: tuple[Path, ...] = (log_dir,)
+
+    log_level: str = "INFO"
+    log_full_color: bool = True
+    log_include_function: bool = True
+    success_level: int = 69
 
 
-config = Config()
+@lru_cache
+def get_config() -> Config:
+    return Config()
 
-for directory in config.directories:
-    if directory.exists() and directory.is_file():
-        directory.unlink()  # Remove the file if a file exists with the same name
-    directory.mkdir(parents=True, exist_ok=True)
+
+def prepare_runtime(settings: Config) -> None:
+    for directory in settings.directories:
+        directory.mkdir(parents=True, exist_ok=True)
+
 
 if __name__ == "__main__":
-    pprint(config)
+    pprint(get_config())
