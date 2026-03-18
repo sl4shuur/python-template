@@ -1,8 +1,9 @@
-from src.utils.logging_config import setup_logging, CustomLogger
+import logging
+from src.utils.logging import ColoredLogger
 
 
 def main():
-    logger: CustomLogger = setup_logging(full_color=True, include_function=True)  # type: ignore
+    logger = ColoredLogger.create(name="app", level=logging.DEBUG, full_color=True, include_function=True)
     logger.success("Logging configuration test completed.")
 
 
