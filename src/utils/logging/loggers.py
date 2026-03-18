@@ -1,144 +1,27 @@
 import json
 import logging
-import sys
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Self
+from logging.config import dictConfig
+from typing import Any
 
-from src.interfaces import ILogger
-from config import config
+from config import Config, get_config
+
+from src.adapters.logger import CustomLogger
 from .logging_formatters import ColoredFormatter
 
 
-SUCCESS_LEVEL = 69
-logging.addLevelName(SUCCESS_LEVEL, "SUCCESS")
+def register_success_level() -> None:
+    logging.addLevelName(get_config().success_level, "SUCCESS")
 
 
-class ColoredLogger(ILogger):
-    """Colored console logger with SUCCESS level."""
-
-    def __init__(self, name: str, level: int = logging.INFO) -> None:
-        super().__init__(name, level)
-
-    @classmethod
-    def create(
-        cls,
-        name: str = "app",
-        level: int = logging.INFO,
-        full_color: bool = False,
-        include_function: bool = False,
-    ) -> Self:
-        """
-        Factory method to create a configured ColoredLogger.
-
-        :param name: Logger name.
-        :param level: Logging level.
-        :param full_color: Use block color layout.
-        :param include_function: Show file path + line + function name.
-        :return: Configured ColoredLogger instance.
-        """
-        logging.setLoggerClass(cls)
-        logger = logging.getLogger(name)
-
-        # Clear existing handlers to avoid duplication on re-runs
-        if logger.handlers:
-            for handler in logger.handlers:
-                handler.close()
-                logger.removeHandler(handler)
-
-        logger.setLevel(level)
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(ColoredFormatter(
-            full_color=full_color, include_function=include_function))
-        logger.addHandler(handler)
-
-        return logger  # type: ignore[return-value]
-
-    def success(self, message: str, *args, **kwargs) -> None:
-        """Log a message with SUCCESS level."""
-        if self.isEnabledFor(SUCCESS_LEVEL):
-            self._log(SUCCESS_LEVEL, message, args, stacklevel=2, **kwargs)
-
-
-class EvalLogger(ILogger):
-    """
-    Evaluation metrics logger.
-    Writes colored output to console and appends results to a JSON file.
-    """
-
-    def __init__(self, name: str, level: int = logging.INFO) -> None:
-        super().__init__(name, level)
-        self._json_path: Path | None = None
-        self._run_id: str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self._metrics: dict[str, Any] = {}
-
-    @classmethod
-    def create(
-        cls,
-        name: str = "eval",
-        level: int = logging.INFO,
-        log_file_name: str = "evaluation.log",
-        json_file_name: str = "evaluation.json",
-        full_color: bool = False,
-    ) -> Self:
-        """
-        Factory method to create a configured EvalLogger.
-
-        :param name: Logger name.
-        :param level: Logging level.
-        :param log_file_name: Name of the log file (stored in LOGS_DIR).
-        :param json_file_name: Name of the JSON file for metrics (stored in LOGS_DIR).
-        :param full_color: Use block color layout on console.
-        :return: Configured EvalLogger instance.
-        """
-        logging.setLoggerClass(cls)
-        logger: cls = logging.getLogger(name)  # type: ignore[assignment]
-
-        # Clear existing handlers to avoid duplication on re-runs
-        if logger.handlers:
-            for handler in logger.handlers:
-                handler.close()
-                logger.removeHandler(handler)
-
-        logger.setLevel(level)
-
-        # Console handler — colored with eval badge support
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(ColoredFormatter(
-            full_color=full_color, eval_mode=True))
-        logger.addHandler(console_handler)
-
-        # Plain text file handler
-        log_file = config.log_dir / log_file_name
-        file_handler = logging.FileHandler(log_file, encoding="utf-8")
-        file_handler.setFormatter(logging.Formatter(
-            fmt="%(asctime)s [%(levelname)s] %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        ))
-        logger.addHandler(file_handler)
-
-        # Store JSON path for metric flushing
-        json_file = config.log_dir / json_file_name
-        logger._json_path = json_file
-
-        return logger  # type: ignore[return-value]
+class EvalLogger(CustomLogger):
+    def __init__(self, config: Config, name: str = "eval") -> None:
+        super().__init__(name)
+        self._json_path = config.log_dir / "evaluation.json"
+        self._run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     def metric(self, label: str, score: float) -> None:
-        """
-        Log a single evaluation metric with a score-based badge.
-        Accumulates the metric for JSON export (call flush_json() to write).
-
-        :param label: Metric name (e.g. "Answer Accuracy").
-        :param score: Float score in range [0, 1].
-
-        Example:
-            logger.metric("Answer Accuracy", 0.711)
-            logger.metric("Document Accuracy", 0.0)
-            logger.flush_json()
-        """
-        self._metrics[label] = round(score, 4)
-        display = f"{label}: {score:.4f}"
-        self._log(logging.INFO, display, (), extra={
+        self.info("%s: %.4f", label, score, extra={
                   "score": score}, stacklevel=2)
 
     def flush_json(
@@ -147,18 +30,7 @@ class EvalLogger(ILogger):
         extra: dict[str, Any] | None = None,
         false_positives: list[dict[str, Any]] | None = None,
     ) -> None:
-        """
-        Write metrics to the JSON file.
-        Appends a new run entry — existing data is preserved.
-
-        :param metrics: Full metrics dict to store (e.g. {"final_score": 0.08, "domain_1": {...}}).
-        :param extra: Optional extra fields to include in the run entry (e.g. engine name).
-        :param false_positives: Optional list of wrong predictions with details.
-        """
-        if not self._json_path:
-            return
-
-        runs: list[dict] = []
+        runs: list[dict[str, Any]] = []
         if self._json_path.exists():
             try:
                 runs = json.loads(self._json_path.read_text(encoding="utf-8"))
@@ -181,10 +53,77 @@ class EvalLogger(ILogger):
             encoding="utf-8",
         )
 
-        self._metrics.clear()
-        print(f"Results saved to {self._json_path}")
 
-    def success(self, message: str, *args, **kwargs) -> None:
-        """Log a message with SUCCESS level."""
-        if self.isEnabledFor(SUCCESS_LEVEL):
-            self._log(SUCCESS_LEVEL, message, args, stacklevel=2, **kwargs)
+def build_logging_config(settings: Config) -> dict[str, Any]:
+    return {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "console": {
+                "()": ColoredFormatter,
+                "full_color": settings.log_full_color,
+                "include_function": settings.log_include_function,
+            },
+            "eval_console": {
+                "()": ColoredFormatter,
+                "full_color": settings.log_full_color,
+                "eval_mode": True,
+            },
+            "standard": {
+                "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": settings.log_level,
+                "formatter": "console",
+                "stream": "ext://sys.stdout",
+            },
+            "app_file": {
+                "class": "logging.FileHandler",
+                "level": settings.log_level,
+                "formatter": "standard",
+                "filename": str(settings.log_dir / "app.log"),
+                "encoding": "utf-8",
+            },
+            "eval_console": {
+                "class": "logging.StreamHandler",
+                "level": settings.log_level,
+                "formatter": "eval_console",
+                "stream": "ext://sys.stdout",
+            },
+            "eval_file": {
+                "class": "logging.FileHandler",
+                "level": settings.log_level,
+                "formatter": "standard",
+                "filename": str(settings.log_dir / "evaluation.log"),
+                "encoding": "utf-8",
+            },
+        },
+        "root": {
+            "level": settings.log_level,
+            "handlers": ["console", "app_file"],
+        },
+        "loggers": {
+            "eval": {
+                "level": settings.log_level,
+                "handlers": ["eval_console", "eval_file"],
+                "propagate": False,
+            },
+        },
+    }
+
+
+def configure_logging(settings: Config) -> None:
+    register_success_level()
+    dictConfig(build_logging_config(settings))
+
+
+def get_logger(name: str = "app") -> CustomLogger:
+    return CustomLogger(name)
+
+
+def get_eval_logger(settings: Config, name: str = "eval") -> EvalLogger:
+    return EvalLogger(config=settings, name=name)
