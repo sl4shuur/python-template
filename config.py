@@ -36,8 +36,8 @@ def get_config() -> Config:
     return Config()
 
 
-def prepare_runtime(settings: Config) -> None:
-    for directory in settings.directories:
+def prepare_runtime(config: Config) -> None:
+    for directory in config.directories:
         directory.mkdir(parents=True, exist_ok=True)
 
 

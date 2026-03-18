@@ -15,19 +15,19 @@ def register_success_level() -> None:
     logging.addLevelName(get_config().success_level, "SUCCESS")
 
 
-def build_logging_config(settings: Config) -> dict[str, Any]:
+def build_logging_config(config: Config) -> dict[str, Any]:
     return {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
             "console": {
                 "()": ColoredFormatter,
-                "full_color": settings.log_full_color,
-                "include_function": settings.log_include_function,
+                "full_color": config.log_full_color,
+                "include_function": config.log_include_function,
             },
             "eval_console": {
                 "()": ColoredFormatter,
-                "full_color": settings.log_full_color,
+                "full_color": config.log_full_color,
                 "eval_mode": True,
             },
             "standard": {
@@ -38,38 +38,38 @@ def build_logging_config(settings: Config) -> dict[str, Any]:
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
-                "level": settings.log_level,
+                "level": config.log_level,
                 "formatter": "console",
                 "stream": "ext://sys.stdout",
             },
             "app_file": {
                 "class": "logging.FileHandler",
-                "level": settings.log_level,
+                "level": config.log_level,
                 "formatter": "standard",
-                "filename": str(settings.log_dir / "app.log"),
+                "filename": str(config.log_dir / "app.log"),
                 "encoding": "utf-8",
             },
             "eval_console": {
                 "class": "logging.StreamHandler",
-                "level": settings.log_level,
+                "level": config.log_level,
                 "formatter": "eval_console",
                 "stream": "ext://sys.stdout",
             },
             "eval_file": {
                 "class": "logging.FileHandler",
-                "level": settings.log_level,
+                "level": config.log_level,
                 "formatter": "standard",
-                "filename": str(settings.log_dir / "evaluation.log"),
+                "filename": str(config.log_dir / "evaluation.log"),
                 "encoding": "utf-8",
             },
         },
         "root": {
-            "level": settings.log_level,
+            "level": config.log_level,
             "handlers": ["console", "app_file"],
         },
         "loggers": {
             "eval": {
-                "level": settings.log_level,
+                "level": config.log_level,
                 "handlers": ["eval_console", "eval_file"],
                 "propagate": False,
             },
@@ -77,9 +77,9 @@ def build_logging_config(settings: Config) -> dict[str, Any]:
     }
 
 
-def configure_logging(settings: Config) -> None:
+def configure_logging(config: Config) -> None:
     register_success_level()
-    dictConfig(build_logging_config(settings))
+    dictConfig(build_logging_config(config))
 
 
 def get_logger(
