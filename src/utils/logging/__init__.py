@@ -1,9 +1,8 @@
+from src.adapters import CustomLogger, EvalLogger
+
 from .loggers import (
-    CustomLogger,
-    EvalLogger,
     build_logging_config,
     configure_logging,
-    get_eval_logger,
     get_logger,
 )
 
@@ -12,6 +11,5 @@ __all__ = [
     "EvalLogger",
     "build_logging_config",
     "configure_logging",
-    "get_eval_logger",
     "get_logger",
 ]

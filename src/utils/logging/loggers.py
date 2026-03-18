@@ -1,57 +1,18 @@
-import json
 import logging
-from datetime import datetime
+from collections.abc import Callable
 from logging.config import dictConfig
-from typing import Any
+from typing import Any, ParamSpec, TypeVar
 
 from config import Config, get_config
-
-from src.adapters.logger import CustomLogger
 from .logging_formatters import ColoredFormatter
+
+
+P = ParamSpec("P")
+TLogger = TypeVar("TLogger", bound=logging.LoggerAdapter)
 
 
 def register_success_level() -> None:
     logging.addLevelName(get_config().success_level, "SUCCESS")
-
-
-class EvalLogger(CustomLogger):
-    def __init__(self, config: Config, name: str = "eval") -> None:
-        super().__init__(name)
-        self._json_path = config.log_dir / "evaluation.json"
-        self._run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-    def metric(self, label: str, score: float) -> None:
-        self.info("%s: %.4f", label, score, extra={
-                  "score": score}, stacklevel=2)
-
-    def flush_json(
-        self,
-        metrics: dict[str, Any],
-        extra: dict[str, Any] | None = None,
-        false_positives: list[dict[str, Any]] | None = None,
-    ) -> None:
-        runs: list[dict[str, Any]] = []
-        if self._json_path.exists():
-            try:
-                runs = json.loads(self._json_path.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
-                runs = []
-
-        entry: dict[str, Any] = {
-            "run_id": self._run_id,
-            "timestamp": datetime.now().isoformat(),
-            "metrics": metrics,
-        }
-        if extra:
-            entry["extra"] = extra
-        if false_positives:
-            entry["false_positives"] = false_positives
-
-        runs.append(entry)
-        self._json_path.write_text(
-            json.dumps(runs, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
 
 
 def build_logging_config(settings: Config) -> dict[str, Any]:
@@ -121,9 +82,9 @@ def configure_logging(settings: Config) -> None:
     dictConfig(build_logging_config(settings))
 
 
-def get_logger(name: str = "app") -> CustomLogger:
-    return CustomLogger(name)
-
-
-def get_eval_logger(settings: Config, name: str = "eval") -> EvalLogger:
-    return EvalLogger(config=settings, name=name)
+def get_logger(
+    logger_factory: Callable[P, TLogger],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> TLogger:
+    return logger_factory(*args, **kwargs)
