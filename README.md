@@ -33,7 +33,13 @@ See the [Astral uv docs](https://docs.astral.sh/uv/) for more installation optio
    uv sync
    ```
 
-3. Run what you want using `uv run <script>` command. For example, to update the README file with the countdown to the deadline, run:
+3. Copy the `.env.example` file to `.env` and update the environment variables as needed:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Run what you want using `uv run <script>` command. For example, to update the README file with the countdown to the deadline, run:
 
    ```bash
    uv run src/scripts/script.py
@@ -53,7 +59,7 @@ See the [Astral uv docs](https://docs.astral.sh/uv/) for more installation optio
    python src/scripts/script.py
    ```
 
-4. To run a Jupyter notebook, ensure you have selected the correct Python kernel in your Jupyter environment. You can do this by opening the notebook and selecting the kernel that corresponds to your virtual environment.
+5. To run a Jupyter notebook, ensure you have selected the correct Python kernel in your Jupyter environment. You can do this by opening the notebook and selecting the kernel that corresponds to your virtual environment.
 
 ## Pulling updates to existing project
 
