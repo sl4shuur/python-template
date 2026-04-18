@@ -1,5 +1,5 @@
 from config import get_config, prepare_runtime, Config
-from src.utils.logging.loggers import configure_logging
+from loggers import configure_logging
 
 
 def setup() -> Config:

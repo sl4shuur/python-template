@@ -11,10 +11,6 @@ P = ParamSpec("P")
 TLogger = TypeVar("TLogger", bound=logging.LoggerAdapter)
 
 
-def register_success_level() -> None:
-    logging.addLevelName(get_config().success_level, "SUCCESS")
-
-
 def build_logging_config(config: Config) -> dict[str, Any]:
     return {
         "version": 1,
@@ -32,6 +28,10 @@ def build_logging_config(config: Config) -> dict[str, Any]:
             },
             "standard": {
                 "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+            "eval_standard": {
+                "format": "%(asctime)s [%(levelname)s] %(message)s",
                 "datefmt": "%Y-%m-%d %H:%M:%S",
             },
         },
@@ -58,7 +58,7 @@ def build_logging_config(config: Config) -> dict[str, Any]:
             "eval_file": {
                 "class": "logging.FileHandler",
                 "level": config.log_level,
-                "formatter": "standard",
+                "formatter": "eval_standard",
                 "filename": str(config.log_dir / "evaluation.log"),
                 "encoding": "utf-8",
             },
@@ -78,7 +78,7 @@ def build_logging_config(config: Config) -> dict[str, Any]:
 
 
 def configure_logging(config: Config) -> None:
-    register_success_level()
+    logging.addLevelName(get_config().success_level, "SUCCESS")
     dictConfig(build_logging_config(config))
 
 

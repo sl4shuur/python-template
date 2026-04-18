@@ -1,15 +1,24 @@
 import json
 import logging
-from datetime import datetime
 from typing import Any
+from datetime import datetime
 
-from config import Config
+from config import Config, get_config
+
+
+class CustomLogger(logging.LoggerAdapter):
+    def __init__(self, name: str = "app") -> None:
+        super().__init__(logging.getLogger(name), extra={})
+
+    def success(self, message: str, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("stacklevel", 2)
+        self.logger.log(get_config().success_level, message, *args, **kwargs)
 
 
 class EvalLogger(logging.LoggerAdapter):
     def __init__(self, config: Config, name: str = "eval") -> None:
         super().__init__(logging.getLogger(name), {})
-        
+
         self._json_path = config.log_dir / "evaluation.json"
         self._run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
