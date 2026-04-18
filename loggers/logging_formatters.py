@@ -1,14 +1,16 @@
 import logging
+
 from colorama import Fore, Style
 
 
 def _hex_to_ansi(hex_color: str) -> str:
     """Convert hex color to ANSI escape sequence."""
     hex_color = hex_color.lstrip("#")
-    r, g, b = tuple(int(hex_color[i: i + 2], 16) for i in (0, 2, 4))
+    r, g, b = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
     return f"\033[38;2;{r};{g};{b}m"
 
 
+# fmt: off
 COLORS = {
     "DEBUG":    _hex_to_ansi("#3ACEFF"),
     "INFO":     _hex_to_ansi("#A1F7FF"),
@@ -23,6 +25,7 @@ EVAL_THRESHOLDS = [
     ("OKAY", 0.4, _hex_to_ansi("#FDF32F")),
     ("POOR", 0.0,  _hex_to_ansi("#F61C1C")),
 ]
+# fmt: on
 
 
 def _get_eval_badge(score: float) -> tuple[str, str]:

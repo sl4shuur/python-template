@@ -1,4 +1,4 @@
-from config import get_config, prepare_runtime, Config
+from config import Config, get_config, prepare_runtime
 from loggers import configure_logging
 
 

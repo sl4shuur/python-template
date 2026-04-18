@@ -1,7 +1,7 @@
 import json
 import logging
-from typing import Any
 from datetime import datetime
+from typing import Any
 
 from config import Config, get_config
 

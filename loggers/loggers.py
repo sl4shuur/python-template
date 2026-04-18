@@ -4,8 +4,8 @@ from logging.config import dictConfig
 from typing import Any, ParamSpec, TypeVar
 
 from config import Config, get_config
-from .logging_formatters import ColoredFormatter
 
+from .logging_formatters import ColoredFormatter
 
 P = ParamSpec("P")
 TLogger = TypeVar("TLogger", bound=logging.LoggerAdapter)
