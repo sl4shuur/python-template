@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 from pprint import pprint
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -24,6 +25,8 @@ class Config(BaseSettings):
     directories: tuple[Path, ...] = (log_dir,)
 
     log_level: str = "INFO"
+    log_formatter: Literal["ColoredFormatter", "ContextualColorFormatter"] = "ColoredFormatter"
+    log_date_format: str = "%d-%m-%Y %H:%M:%S"
     log_full_color: bool = True
     log_include_function: bool = True
     success_level: int = 69
@@ -37,6 +40,15 @@ def get_config() -> Config:
 def prepare_runtime(config: Config) -> None:
     for directory in config.directories:
         directory.mkdir(parents=True, exist_ok=True)
+
+
+def configure_logging() -> Config:
+    from loggers.loggers import configure_logging as apply_logging_config
+
+    config = get_config()
+    prepare_runtime(config)
+    apply_logging_config(config)
+    return config
 
 
 if __name__ == "__main__":
