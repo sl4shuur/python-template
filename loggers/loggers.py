@@ -1,38 +1,44 @@
 import logging
 from collections.abc import Callable
 from logging.config import dictConfig
-from typing import Any, ParamSpec, TypeVar
+from typing import Any
 
-from config import Config, get_config
+from config import Config
 
-from .logging_formatters import ColoredFormatter
+from .logging_formatters import ColoredFormatter, ContextualColorFormatter
 
-P = ParamSpec("P")
-TLogger = TypeVar("TLogger", bound=logging.LoggerAdapter)
+FORMATTERS: dict[str, type[logging.Formatter]] = {
+    ColoredFormatter.__name__: ColoredFormatter,
+    ContextualColorFormatter.__name__: ContextualColorFormatter,
+}
 
 
 def build_logging_config(config: Config) -> dict[str, Any]:
+    console_formatter = FORMATTERS[config.log_formatter]
+
     return {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
             "console": {
-                "()": ColoredFormatter,
+                "()": console_formatter,
                 "full_color": config.log_full_color,
                 "include_function": config.log_include_function,
+                "date_format": config.log_date_format,
             },
             "eval_console": {
-                "()": ColoredFormatter,
+                "()": ContextualColorFormatter,
                 "full_color": config.log_full_color,
                 "eval_mode": True,
+                "date_format": config.log_date_format,
             },
             "standard": {
                 "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S",
+                "datefmt": config.log_date_format,
             },
             "eval_standard": {
                 "format": "%(asctime)s [%(levelname)s] %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S",
+                "datefmt": config.log_date_format,
             },
         },
         "handlers": {
@@ -78,11 +84,11 @@ def build_logging_config(config: Config) -> dict[str, Any]:
 
 
 def configure_logging(config: Config) -> None:
-    logging.addLevelName(get_config().success_level, "SUCCESS")
+    logging.addLevelName(config.success_level, "SUCCESS")
     dictConfig(build_logging_config(config))
 
 
-def get_logger(
+def get_logger[**P, TLogger: logging.LoggerAdapter](
     logger_factory: Callable[P, TLogger],
     *args: P.args,
     **kwargs: P.kwargs,

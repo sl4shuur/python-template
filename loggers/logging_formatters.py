@@ -41,7 +41,7 @@ def _get_eval_badge(score: float) -> tuple[str, str]:
     return "POOR", _hex_to_ansi("#F61C1C")
 
 
-class ColoredFormatter(logging.Formatter):
+class ContextualColorFormatter(logging.Formatter):
     """
     Colored console formatter.
 
@@ -59,6 +59,7 @@ class ColoredFormatter(logging.Formatter):
         full_color: bool = False,
         include_function: bool = False,
         eval_mode: bool = False,
+        date_format: str = "%d-%m-%Y %H:%M:%S",
     ) -> None:
         """
         :param full_color: Wrap entire output in level color block.
@@ -69,6 +70,7 @@ class ColoredFormatter(logging.Formatter):
         self.full_color = full_color
         self.include_function = include_function
         self.eval_mode = eval_mode
+        self.date_format = date_format
 
     def _build_context(self, record: logging.LogRecord, log_color: str) -> str | None:
         """
@@ -97,7 +99,7 @@ class ColoredFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         log_color = COLORS.get(record.levelname, Fore.WHITE)
-        timestamp = self.formatTime(record, "%Y-%m-%d %H:%M:%S")
+        timestamp = self.formatTime(record, self.date_format)
 
         score = getattr(record, "score", None)
 
@@ -135,3 +137,69 @@ class ColoredFormatter(logging.Formatter):
 
         colored_level = f"{message_color}{record.levelname}{Style.RESET_ALL}"
         return f"{header}\n{colored_level}: {message_color}{record.getMessage()}{Style.RESET_ALL}"
+
+
+class ColoredFormatter(logging.Formatter):
+    """
+    Single-line aligned formatter.
+
+    Example:
+    15-04-2026 21:34:52  INFO  [app.services.pipeline:89]  message
+    """
+
+    def __init__(
+        self,
+        *,
+        full_color: bool = True,
+        include_function: bool = True,
+        level_width: int = 8,
+        date_format: str = "%d-%m-%Y %H:%M:%S",
+    ) -> None:
+        super().__init__()
+        self.full_color = full_color
+        self.include_function = include_function
+        self.level_width = level_width
+        self.date_format = date_format
+
+    @staticmethod
+    def _colorize(text: str, enabled: bool, color: str) -> str:
+        if not enabled:
+            return text
+        return f"{color}{text}{Style.RESET_ALL}"
+
+    def _format_message(self, record: logging.LogRecord) -> str:
+        message = record.getMessage()
+
+        if record.exc_info:
+            if not record.exc_text:
+                record.exc_text = self.formatException(record.exc_info)
+            message = f"{message}\n{record.exc_text}"
+
+        if record.stack_info:
+            message = f"{message}\n{self.formatStack(record.stack_info)}"
+
+        return message
+
+    def format(self, record: logging.LogRecord) -> str:
+        log_color = COLORS.get(record.levelname, Fore.WHITE)
+
+        timestamp = self.formatTime(record, self.date_format)
+        if self.include_function:
+            level = f"{record.levelname:<{self.level_width}}"
+        else:
+            level = record.levelname
+        message = self._format_message(record)
+
+        timestamp = self._colorize(timestamp, self.full_color, log_color)
+        level = self._colorize(level, self.full_color, log_color)
+
+        parts = [timestamp, level]
+        if self.include_function:
+            logger_name = record.module if record.name == "__main__" else record.name
+            location = f"[{logger_name}:{record.lineno}]"
+            location = self._colorize(location, self.full_color, _hex_to_ansi("#76ADF4"))
+            parts.append(location)
+        parts.append(message)
+
+        return "  ".join(parts)
+
