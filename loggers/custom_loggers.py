@@ -1,5 +1,6 @@
 import json
 import logging
+from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
@@ -17,10 +18,25 @@ class CustomLogger(logging.LoggerAdapter):
 
 class EvalLogger(logging.LoggerAdapter):
     def __init__(self, config: Config, name: str = "eval") -> None:
-        super().__init__(logging.getLogger(name), {})
+        logger_name = name if name == "eval" or name.startswith("eval.") else f"eval.{name}"
+        super().__init__(logging.getLogger(logger_name), {})
 
         self._json_path = config.log_dir / "evaluation.json"
-        self._run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self._run_id = datetime.now().strftime(config.log_date_format)
+
+    def process(
+        self,
+        msg: Any,
+        kwargs: dict[str, Any],
+    ) -> tuple[Any, dict[str, Any]]:
+        extra = dict(self.extra) if self.extra else {}
+        record_extra = kwargs.get("extra")
+
+        if isinstance(record_extra, Mapping):
+            extra.update(record_extra)
+
+        kwargs["extra"] = extra
+        return msg, kwargs
 
     def metric(self, label: str, score: float) -> None:
         self.info("%s: %.4f", label, score, extra={"score": score}, stacklevel=2)

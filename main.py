@@ -1,10 +1,11 @@
 import rich_click as click
 
 from config import configure_logging
-from loggers import CustomLogger, get_logger
+from loggers import CustomLogger, EvalLogger, get_logger
 
 config = configure_logging()
-logger = get_logger(CustomLogger, __name__)
+logger = get_logger(CustomLogger, name=__name__)
+eval_logger = get_logger(EvalLogger, config=config, name=__name__)
 
 
 @click.group(
@@ -19,7 +20,6 @@ def main(ctx: click.Context) -> int:
 
 
 if __name__ == "__main__":
-    logger.success("Application started successfully!")
-    logger.info("This is an informational message.")
-    logger.warning("This is a warning message.")
+    eval_logger.metric("example_metric", 0.5234)
+    logger.success("This is a success message.")
     exit(main())

@@ -180,7 +180,20 @@ class ColoredFormatter(logging.Formatter):
 
         return message
 
+    def _format_eval_record(self, record: logging.LogRecord, score: float) -> str:
+        label, eval_color = _get_eval_badge(float(score))
+
+        timestamp = self.formatTime(record, self.date_format)
+        message = self._format_message(record)
+        row = "  ".join([timestamp, label, message])
+
+        return self._colorize(row, self.full_color, eval_color)
+
     def format(self, record: logging.LogRecord) -> str:
+        score: float | None = getattr(record, "score", None)
+        if score is not None:
+            return self._format_eval_record(record, score)
+
         log_color = COLORS.get(record.levelname, Fore.WHITE)
 
         timestamp = self.formatTime(record, self.date_format)
@@ -203,3 +216,17 @@ class ColoredFormatter(logging.Formatter):
 
         return "  ".join(parts)
 
+
+class EvalFileFormatter(logging.Formatter):
+    def __init__(self, date_format: str = "%d-%m-%Y %H:%M:%S") -> None:
+        super().__init__()
+        self.date_format = date_format
+
+    def format(self, record: logging.LogRecord) -> str:
+        score: float | None = getattr(record, "score", None)
+        level = record.levelname
+        if score is not None:
+            level, _ = _get_eval_badge(float(score))
+
+        timestamp = self.formatTime(record, self.date_format)
+        return f"{timestamp} [{level}] {record.getMessage()}"

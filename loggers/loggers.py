@@ -5,7 +5,7 @@ from typing import Any
 
 from config import Config
 
-from .logging_formatters import ColoredFormatter, ContextualColorFormatter
+from .logging_formatters import ColoredFormatter, ContextualColorFormatter, EvalFileFormatter
 
 FORMATTERS: dict[str, type[logging.Formatter]] = {
     ColoredFormatter.__name__: ColoredFormatter,
@@ -27,9 +27,9 @@ def build_logging_config(config: Config) -> dict[str, Any]:
                 "date_format": config.log_date_format,
             },
             "eval_console": {
-                "()": ContextualColorFormatter,
+                "()": console_formatter,
                 "full_color": config.log_full_color,
-                "eval_mode": True,
+                "include_function": config.log_include_function,
                 "date_format": config.log_date_format,
             },
             "standard": {
@@ -37,8 +37,8 @@ def build_logging_config(config: Config) -> dict[str, Any]:
                 "datefmt": config.log_date_format,
             },
             "eval_standard": {
-                "format": "%(asctime)s [%(levelname)s] %(message)s",
-                "datefmt": config.log_date_format,
+                "()": EvalFileFormatter,
+                "date_format": config.log_date_format,
             },
         },
         "handlers": {
