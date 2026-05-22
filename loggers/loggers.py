@@ -83,7 +83,7 @@ def build_logging_config(config: Config) -> dict[str, Any]:
     }
 
 
-def configure_logging(config: Config) -> None:
+def apply_logging_config(config: Config) -> None:
     logging.addLevelName(config.success_level, "SUCCESS")
     dictConfig(build_logging_config(config))
 

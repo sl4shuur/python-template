@@ -1,11 +1,11 @@
 from .custom_loggers import CustomLogger, EvalLogger
-from .loggers import ColoredFormatter, ContextualColorFormatter, configure_logging, get_logger
+from .loggers import ColoredFormatter, ContextualColorFormatter, apply_logging_config, get_logger
 
 __all__ = [
     "ColoredFormatter",
     "ContextualColorFormatter",
     "CustomLogger",
     "EvalLogger",
-    "configure_logging",
+    "apply_logging_config",
     "get_logger",
 ]

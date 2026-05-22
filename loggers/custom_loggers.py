@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
-from config import Config, get_config
+from config import Config, _setup_config
 
 
 class CustomLogger(logging.LoggerAdapter):
@@ -13,7 +13,7 @@ class CustomLogger(logging.LoggerAdapter):
 
     def success(self, message: str, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("stacklevel", 2)
-        self.logger.log(get_config().success_level, message, *args, **kwargs)
+        self.logger.log(_setup_config().success_level, message, *args, **kwargs)
 
 
 class EvalLogger(logging.LoggerAdapter):

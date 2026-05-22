@@ -33,20 +33,20 @@ class Config(BaseSettings):
 
 
 @lru_cache
-def get_config() -> Config:
+def _setup_config() -> Config:
     return Config()
 
 
-def prepare_runtime(config: Config) -> None:
+def _prepare_runtime(config: Config) -> None:
     for directory in config.directories:
         directory.mkdir(parents=True, exist_ok=True)
 
 
-def configure_logging() -> Config:
-    from loggers.loggers import configure_logging as apply_logging_config
+def get_config() -> Config:
+    from loggers.loggers import apply_logging_config
 
-    config = get_config()
-    prepare_runtime(config)
+    config = _setup_config()
+    _prepare_runtime(config)
     apply_logging_config(config)
     return config
 
