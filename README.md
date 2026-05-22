@@ -61,6 +61,14 @@ See the [Astral uv docs](https://docs.astral.sh/uv/) for more installation optio
 
 5. To run a Jupyter notebook, ensure you have selected the correct Python kernel in your Jupyter environment. You can do this by opening the notebook and selecting the kernel that corresponds to your virtual environment.
 
+6. Run linting and tests:
+
+   ```bash
+   uv run ruff check .
+   uv run ruff format .
+   uv run --group test python -m pytest -v
+   ```
+
 ## Pulling updates to existing project
 
 1. Add this repository as a remote if you haven't already:
