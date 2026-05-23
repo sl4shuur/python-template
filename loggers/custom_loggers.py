@@ -7,30 +7,32 @@ from typing import Any
 from config import Config, _setup_config
 
 
+def _attach_file_handler(logger: logging.Logger, name: str) -> None:
+    config = _setup_config()
+    log_path = config.log_dir / f"{name}.log"
+    if any(
+        isinstance(h, logging.FileHandler) and h.baseFilename == str(
+            log_path.resolve())
+        for h in logger.handlers
+    ):
+        return
+    handler = logging.FileHandler(log_path, encoding="utf-8")
+    handler.setLevel(config.log_level)
+    handler.setFormatter(
+        logging.Formatter(
+            # "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            "%(asctime)s [%(levelname)s] %(message)s",
+            datefmt=config.log_date_format,
+        )
+    )
+    logger.addHandler(handler)
+
+
 class CustomLogger(logging.LoggerAdapter):
     def __init__(self, name: str = "app") -> None:
         underlying = logging.getLogger(name)
         super().__init__(underlying, extra={})
-        self._attach_file_handler(underlying, name)
-
-    def _attach_file_handler(self, logger: logging.Logger, name: str) -> None:
-        config = _setup_config()
-        log_path = config.log_dir / f"{name}.log"
-        if any(
-            isinstance(h, logging.FileHandler) and h.baseFilename == str(log_path.resolve())
-            for h in logger.handlers
-        ):
-            return
-        handler = logging.FileHandler(log_path, encoding="utf-8")
-        handler.setLevel(config.log_level)
-        handler.setFormatter(
-            logging.Formatter(
-                # "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-                "%(asctime)s [%(levelname)s] %(message)s",
-                datefmt=config.log_date_format,
-            )
-        )
-        logger.addHandler(handler)
+        _attach_file_handler(underlying, name)
 
     def success(self, message: str, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("stacklevel", 2)
@@ -40,7 +42,9 @@ class CustomLogger(logging.LoggerAdapter):
 class EvalLogger(logging.LoggerAdapter):
     def __init__(self, config: Config, name: str = "eval") -> None:
         logger_name = name if name == "eval" or name.startswith("eval.") else f"eval.{name}"
-        super().__init__(logging.getLogger(logger_name), {})
+        underlying = logging.getLogger(logger_name)
+        super().__init__(underlying, {})
+        _attach_file_handler(underlying, logger_name)
 
         self._json_path = config.log_dir / "evaluation.json"
         self._run_id = datetime.now().strftime(config.log_date_format)
