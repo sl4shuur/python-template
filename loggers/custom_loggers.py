@@ -9,7 +9,28 @@ from config import Config, _setup_config
 
 class CustomLogger(logging.LoggerAdapter):
     def __init__(self, name: str = "app") -> None:
-        super().__init__(logging.getLogger(name), extra={})
+        underlying = logging.getLogger(name)
+        super().__init__(underlying, extra={})
+        self._attach_file_handler(underlying, name)
+
+    def _attach_file_handler(self, logger: logging.Logger, name: str) -> None:
+        config = _setup_config()
+        log_path = config.log_dir / f"{name}.log"
+        if any(
+            isinstance(h, logging.FileHandler) and h.baseFilename == str(log_path.resolve())
+            for h in logger.handlers
+        ):
+            return
+        handler = logging.FileHandler(log_path, encoding="utf-8")
+        handler.setLevel(config.log_level)
+        handler.setFormatter(
+            logging.Formatter(
+                # "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+                "%(asctime)s [%(levelname)s] %(message)s",
+                datefmt=config.log_date_format,
+            )
+        )
+        logger.addHandler(handler)
 
     def success(self, message: str, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("stacklevel", 2)

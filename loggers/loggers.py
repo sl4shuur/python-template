@@ -48,13 +48,6 @@ def build_logging_config(config: Config) -> dict[str, Any]:
                 "formatter": "console",
                 "stream": "ext://sys.stdout",
             },
-            "app_file": {
-                "class": "logging.FileHandler",
-                "level": config.log_level,
-                "formatter": "standard",
-                "filename": str(config.log_dir / "app.log"),
-                "encoding": "utf-8",
-            },
             "eval_console": {
                 "class": "logging.StreamHandler",
                 "level": config.log_level,
@@ -71,7 +64,7 @@ def build_logging_config(config: Config) -> dict[str, Any]:
         },
         "root": {
             "level": config.log_level,
-            "handlers": ["console", "app_file"],
+            "handlers": ["console"],
         },
         "loggers": {
             "eval": {
