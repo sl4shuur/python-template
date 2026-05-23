@@ -5,7 +5,7 @@ from typing import Any
 
 from config import Config
 
-from .logging_formatters import ColoredFormatter, ContextualColorFormatter, EvalFileFormatter
+from .logging_formatters import ColoredFormatter, ContextualColorFormatter
 
 FORMATTERS: dict[str, type[logging.Formatter]] = {
     ColoredFormatter.__name__: ColoredFormatter,
@@ -36,10 +36,6 @@ def build_logging_config(config: Config) -> dict[str, Any]:
                 "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
                 "datefmt": config.log_date_format,
             },
-            "eval_standard": {
-                "()": EvalFileFormatter,
-                "date_format": config.log_date_format,
-            },
         },
         "handlers": {
             "console": {
@@ -54,13 +50,6 @@ def build_logging_config(config: Config) -> dict[str, Any]:
                 "formatter": "eval_console",
                 "stream": "ext://sys.stdout",
             },
-            "eval_file": {
-                "class": "logging.FileHandler",
-                "level": config.log_level,
-                "formatter": "eval_standard",
-                "filename": str(config.log_dir / "evaluation.log"),
-                "encoding": "utf-8",
-            },
         },
         "root": {
             "level": config.log_level,
@@ -69,7 +58,7 @@ def build_logging_config(config: Config) -> dict[str, Any]:
         "loggers": {
             "eval": {
                 "level": config.log_level,
-                "handlers": ["eval_console", "eval_file"],
+                "handlers": ["eval_console"],
                 "propagate": False,
             },
         },

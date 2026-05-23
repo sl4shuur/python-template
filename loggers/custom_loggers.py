@@ -5,9 +5,14 @@ from datetime import datetime
 from typing import Any
 
 from config import Config, _setup_config
+from .logging_formatters import EvalFileFormatter
 
 
-def _attach_file_handler(logger: logging.Logger, name: str) -> None:
+def _attach_file_handler(
+    logger: logging.Logger,
+    name: str,
+    formatter: logging.Formatter | None = None,
+) -> None:
     config = _setup_config()
     log_path = config.log_dir / f"{name}.log"
     if any(
@@ -19,8 +24,7 @@ def _attach_file_handler(logger: logging.Logger, name: str) -> None:
     handler = logging.FileHandler(log_path, encoding="utf-8")
     handler.setLevel(config.log_level)
     handler.setFormatter(
-        logging.Formatter(
-            # "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        formatter or logging.Formatter(
             "%(asctime)s [%(levelname)s] %(message)s",
             datefmt=config.log_date_format,
         )
@@ -44,7 +48,7 @@ class EvalLogger(logging.LoggerAdapter):
         logger_name = name if name == "eval" or name.startswith("eval.") else f"eval.{name}"
         underlying = logging.getLogger(logger_name)
         super().__init__(underlying, {})
-        _attach_file_handler(underlying, logger_name)
+        _attach_file_handler(underlying, logger_name, EvalFileFormatter(config.log_date_format))
 
         self._json_path = config.log_dir / "evaluation.json"
         self._run_id = datetime.now().strftime(config.log_date_format)
