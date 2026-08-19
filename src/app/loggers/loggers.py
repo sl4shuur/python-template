@@ -3,7 +3,7 @@ from collections.abc import Callable
 from logging.config import dictConfig
 from typing import Any
 
-from config import Config
+from app.config import Config
 
 from .logging_formatters import ColoredFormatter, ContextualColorFormatter
 

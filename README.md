@@ -39,24 +39,29 @@ See the [Astral uv docs](https://docs.astral.sh/uv/) for more installation optio
    cp .env.example .env
    ```
 
-4. Run what you want using `uv run <script>` command. For example, to update the README file with the countdown to the deadline, run:
+4. Run the application through its Rich-Click command:
 
    ```bash
-   uv run src/scripts/script.py
+   uv run python-template
    ```
 
-   or directly with Python:
+   View all command-line options with either help flag:
 
    ```bash
-   # Activate your virtual environment first
+   uv run python-template --help
+   uv run python-template -h
+   ```
+
+   You can also activate the virtual environment and invoke the module directly:
+
+   ```bash
    # (Windows)
    .venv\Scripts\Activate
 
    # (macOS/Linux)
    source .venv/bin/activate
 
-   # Run the script
-   python src/scripts/script.py
+   python -m app.cli
    ```
 
 5. To run a Jupyter notebook, ensure you have selected the correct Python kernel in your Jupyter environment. You can do this by opening the notebook and selecting the kernel that corresponds to your virtual environment.

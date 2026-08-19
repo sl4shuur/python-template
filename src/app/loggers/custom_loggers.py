@@ -4,7 +4,8 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
-from config import Config, _setup_config
+from app.config import Config, get_config
+
 from .logging_formatters import EvalFileFormatter
 
 
@@ -13,11 +14,11 @@ def _attach_file_handler(
     name: str,
     formatter: logging.Formatter | None = None,
 ) -> None:
-    config = _setup_config()
+    config = get_config()
     log_path = config.log_dir / f"{name}.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     if any(
-        isinstance(h, logging.FileHandler) and h.baseFilename == str(
-            log_path.resolve())
+        isinstance(h, logging.FileHandler) and h.baseFilename == str(log_path.resolve())
         for h in logger.handlers
     ):
         return
@@ -40,7 +41,7 @@ class CustomLogger(logging.LoggerAdapter):
 
     def success(self, message: str, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("stacklevel", 2)
-        self.logger.log(_setup_config().success_level, message, *args, **kwargs)
+        self.logger.log(get_config().success_level, message, *args, **kwargs)
 
 
 class EvalLogger(logging.LoggerAdapter):
