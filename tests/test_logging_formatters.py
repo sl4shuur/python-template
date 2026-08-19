@@ -2,9 +2,9 @@ import logging
 
 from colorama import Style
 
-from config import Config
-from loggers.custom_loggers import EvalLogger
-from loggers.logging_formatters import ColoredFormatter, EvalFileFormatter
+from app.config import Config
+from app.loggers.custom_loggers import EvalLogger
+from app.loggers.logging_formatters import ColoredFormatter, EvalFileFormatter
 
 
 def _record() -> logging.LogRecord:

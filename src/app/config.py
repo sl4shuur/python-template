@@ -43,7 +43,7 @@ def _prepare_runtime(config: Config) -> None:
 
 
 def get_config() -> Config:
-    from loggers.loggers import apply_logging_config
+    from app.loggers.loggers import apply_logging_config
 
     config = _setup_config()
     _prepare_runtime(config)

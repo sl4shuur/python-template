@@ -1,7 +1,7 @@
 import rich_click as click
 
-from config import get_config
-from loggers import CustomLogger, EvalLogger, get_logger
+from app.config import get_config
+from app.loggers import CustomLogger, EvalLogger, get_logger
 
 config = get_config()
 logger = get_logger(CustomLogger, name=__name__)
