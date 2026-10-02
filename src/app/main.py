@@ -1,14 +1,12 @@
 """Application orchestration, independent of the command-line interface."""
 
 from app.bootstrap import bootstrap
-from app.config import get_config
 from app.loggers import CustomLogger, EvalLogger, get_logger
 
 
 def run() -> int:
     """Run the application."""
-    config = get_config()
-    bootstrap(config)
+    config = bootstrap()
 
     logger = get_logger(CustomLogger, name=__name__)
     eval_logger = get_logger(EvalLogger, config=config, name=__name__)
