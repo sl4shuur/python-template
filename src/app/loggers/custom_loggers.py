@@ -15,7 +15,7 @@ def _attach_file_handler(
     formatter: logging.Formatter | None = None,
 ) -> None:
     config = get_config()
-    log_path = config.log_dir / f"{name}.log"
+    log_path = config.logging.directory / f"{name}.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     if any(
         isinstance(h, logging.FileHandler) and h.baseFilename == str(log_path.resolve())
@@ -23,11 +23,11 @@ def _attach_file_handler(
     ):
         return
     handler = logging.FileHandler(log_path, encoding="utf-8")
-    handler.setLevel(config.log_level)
+    handler.setLevel(config.logging.level)
     handler.setFormatter(
         formatter or logging.Formatter(
             "%(asctime)s [%(levelname)s] %(message)s",
-            datefmt=config.log_date_format,
+            datefmt=config.logging.date_format,
         )
     )
     logger.addHandler(handler)
@@ -41,7 +41,7 @@ class CustomLogger(logging.LoggerAdapter):
 
     def success(self, message: str, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("stacklevel", 2)
-        self.logger.log(get_config().success_level, message, *args, **kwargs)
+        self.logger.log(get_config().logging.success_level, message, *args, **kwargs)
 
 
 class EvalLogger(logging.LoggerAdapter):
@@ -49,10 +49,10 @@ class EvalLogger(logging.LoggerAdapter):
         logger_name = name if name == "eval" or name.startswith("eval.") else f"eval.{name}"
         underlying = logging.getLogger(logger_name)
         super().__init__(underlying, {})
-        _attach_file_handler(underlying, logger_name, EvalFileFormatter(config.log_date_format))
+        _attach_file_handler(underlying, logger_name, EvalFileFormatter(config.logging.date_format))
 
-        self._json_path = config.log_dir / "evaluation.json"
-        self._run_id = datetime.now().strftime(config.log_date_format)
+        self._json_path = config.logging.directory / "evaluation.json"
+        self._run_id = datetime.now().strftime(config.logging.date_format)
 
     def process(
         self,

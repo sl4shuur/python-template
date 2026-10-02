@@ -2,7 +2,7 @@ import logging
 
 from colorama import Style
 
-from app.config import Config
+from app.config import Config, LoggingSettings
 from app.loggers.custom_loggers import EvalLogger
 from app.loggers.logging_formatters import ColoredFormatter, EvalFileFormatter
 
@@ -93,7 +93,7 @@ def test_compact_formatter_colors_whole_eval_row() -> None:
 
 
 def test_eval_logger_routes_named_loggers_under_eval_namespace(tmp_path) -> None:
-    config = Config(log_dir=tmp_path)
+    config = Config(logging=LoggingSettings(directory=tmp_path))
     logger = EvalLogger(config=config, name="main")
 
     assert logger.logger.name == "eval.main"
