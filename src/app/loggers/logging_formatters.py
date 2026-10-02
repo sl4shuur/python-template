@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from colorama import Fore, Style
 
@@ -26,6 +27,24 @@ EVAL_THRESHOLDS = [
     ("POOR", 0.0,  _hex_to_ansi("#F61C1C")),
 ]
 # fmt: on
+
+
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent  # .../src/oppengine
+
+
+def _source_label(record: logging.LogRecord) -> str:
+    path = Path(record.pathname).with_suffix("")
+
+    if path.is_relative_to(PACKAGE_ROOT):
+        parts = path.relative_to(PACKAGE_ROOT).parts
+    elif "site-packages" in path.parts:
+        parts = path.parts[path.parts.index("site-packages") + 1 :]
+
+    else:
+        parts = (path.name,)
+    if len(parts) > 1 and parts[-1] == "__init__":
+        parts = parts[:-1]
+    return "/".join(parts)
 
 
 def _get_eval_badge(score: float) -> tuple[str, str]:
@@ -90,7 +109,7 @@ class ContextualColorFormatter(logging.Formatter):
                 return f"{badge_color}[{label}]"
 
         if self.include_function:
-            file_info = f"{record.pathname}:{record.lineno} -> {record.funcName}"
+            file_info = f"{_source_label(record)}:{record.lineno} -> {record.funcName}"
             if self.full_color:
                 return f"[{file_info}]"
             return f"{_hex_to_ansi('#76ADF4')}[{file_info}]{Style.RESET_ALL}"
@@ -144,7 +163,7 @@ class ColoredFormatter(logging.Formatter):
     Single-line aligned formatter.
 
     Example:
-    15-04-2026 21:34:52  INFO  [app.services.pipeline:89]  message
+    15-04-2026 21:34:52  INFO  [services/pipeline:89]  message
     """
 
     def __init__(
@@ -208,8 +227,7 @@ class ColoredFormatter(logging.Formatter):
 
         parts = [timestamp, level]
         if self.include_function:
-            logger_name = record.module if record.name == "__main__" else record.name
-            location = f"[{logger_name}:{record.lineno}]"
+            location = f"\033[4m[{_source_label(record)}:{record.lineno}]\033[24m"
             location = self._colorize(location, self.full_color, _hex_to_ansi("#76ADF4"))
             parts.append(location)
         parts.append(message)
