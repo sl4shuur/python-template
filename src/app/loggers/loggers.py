@@ -3,7 +3,7 @@ from collections.abc import Callable
 from logging.config import dictConfig
 from typing import Any
 
-from app.config import Config
+from app.config import LoggingConfig
 
 from .logging_formatters import ColoredFormatter, ContextualColorFormatter
 
@@ -13,9 +13,8 @@ FORMATTERS: dict[str, type[logging.Formatter]] = {
 }
 
 
-def build_logging_config(config: Config) -> dict[str, Any]:
-    log = config.logging
-    console_formatter = FORMATTERS[log.formatter]
+def build_logging_config(config: LoggingConfig) -> dict[str, Any]:
+    console_formatter = FORMATTERS[config.formatter]
 
     return {
         "version": 1,
@@ -23,42 +22,42 @@ def build_logging_config(config: Config) -> dict[str, Any]:
         "formatters": {
             "console": {
                 "()": console_formatter,
-                "full_color": log.full_color,
-                "include_function": log.include_function,
-                "date_format": log.date_format,
+                "full_color": config.full_color,
+                "include_function": config.include_function,
+                "date_format": config.date_format,
             },
             "eval_console": {
                 "()": console_formatter,
-                "full_color": log.full_color,
-                "include_function": log.include_function,
-                "date_format": log.date_format,
+                "full_color": config.full_color,
+                "include_function": config.include_function,
+                "date_format": config.date_format,
             },
             "standard": {
                 "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-                "datefmt": log.date_format,
+                "datefmt": config.date_format,
             },
         },
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
-                "level": log.level,
+                "level": config.level,
                 "formatter": "console",
                 "stream": "ext://sys.stdout",
             },
             "eval_console": {
                 "class": "logging.StreamHandler",
-                "level": log.level,
+                "level": config.level,
                 "formatter": "eval_console",
                 "stream": "ext://sys.stdout",
             },
         },
         "root": {
-            "level": log.level,
+            "level": config.level,
             "handlers": ["console"],
         },
         "loggers": {
             "eval": {
-                "level": log.level,
+                "level": config.level,
                 "handlers": ["eval_console"],
                 "propagate": False,
             },
@@ -66,8 +65,8 @@ def build_logging_config(config: Config) -> dict[str, Any]:
     }
 
 
-def apply_logging_config(config: Config) -> None:
-    logging.addLevelName(config.logging.success_level, "SUCCESS")
+def apply_logging_config(config: LoggingConfig) -> None:
+    logging.addLevelName(config.success_level, "SUCCESS")
     dictConfig(build_logging_config(config))
 
 

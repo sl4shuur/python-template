@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
-class LoggingSettings(BaseModel):
+class LoggingConfig(BaseModel):
     directory: Path = Field(default=Path("logs"), validate_default=True)
     level: str = "INFO"
     formatter: Literal["ColoredFormatter", "ContextualColorFormatter"] = "ColoredFormatter"
@@ -36,7 +36,7 @@ class Config(BaseSettings):
     )
 
     app_name: str = "app"
-    logging: LoggingSettings = Field(default_factory=LoggingSettings)
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
 
 
 @lru_cache
