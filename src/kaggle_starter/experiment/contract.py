@@ -23,8 +23,8 @@ class RunContext:
 class KaggleModel(ABC):
     @abstractmethod
     def fit(self, train: pd.DataFrame, valid: pd.DataFrame, context: RunContext) -> None:
-        """Train using target_column, store reusable artifacts inside context.output_dir."""
+        """Train on the supplied split; save reusable artifacts inside context.output_dir."""
 
     @abstractmethod
     def predict(self, frame: pd.DataFrame, context: RunContext) -> list[Candidate]:
-        """Return one numeric prediction or class per input row in the same order."""
+        """Return one scalar Candidate per input row in the same order; extend for other tasks."""

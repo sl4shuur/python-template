@@ -30,8 +30,7 @@ def fit(config_path: Path, name: str, dataset_id: str, train_path: Path, valid_p
     from lightning.pytorch.utilities import rank_zero_only
 
     from kaggle_starter.experiment.contract import RunContext
-    from kaggle_starter.loggers import CustomLogger, apply_logging_config
-    from kaggle_starter.loggers.wandb import wandb_run
+    from kaggle_starter.loggers import CustomLogger, apply_logging_config, wandb_run
     from kaggle_starter.models.baseline.model import Baseline
 
     apply_logging_config(config.logging)
