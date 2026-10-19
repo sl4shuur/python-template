@@ -1,18 +1,58 @@
-"""Application settings and runtime preparation helpers."""
+"""Central typed settings. Change .env rather than editing library code."""
 
 from functools import lru_cache
 from pathlib import Path
-from pprint import pprint
-from typing import Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from rich.console import Console
+from rich.table import Table
+from rich.text import Text
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+def _project_root() -> Path:
+    for candidate in Path(__file__).resolve().parents:
+        if (candidate / "pyproject.toml").exists() and (
+            candidate / "src" / "kaggle_starter"
+        ).exists():
+            return candidate
+    return Path.cwd()
 
 
-class LoggingConfig(BaseModel):
-    directory: Path = Field(default=Path("logs"), validate_default=True)
+PROJECT_ROOT = _project_root()
+ProjectPath = Annotated[Path, AfterValidator(lambda p: p if p.is_absolute() else PROJECT_ROOT / p)]
+
+
+class ConfigModel(BaseModel):
+    """Configuration values share one console presentation."""
+
+    # A setting that was renamed or moved must fail loudly instead of being ignored.
+    model_config = ConfigDict(extra="forbid")
+
+    def show(self) -> None:
+        table = Table(title=type(self).__name__, header_style="bold cyan", border_style="dim")
+        table.add_column("Setting", style="cyan", no_wrap=True)
+        table.add_column("Value")
+        values = self.model_dump()
+        for index, (name, value) in enumerate(values.items()):
+            _add_config_rows(table, name, value)
+            if isinstance(value, dict) and index < len(values) - 1:
+                table.add_section()
+        Console().print(table)
+
+
+def _add_config_rows(table: Table, name: str, value: object) -> None:
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            _add_config_rows(table, f"{name}.{key}", nested)
+    else:
+        # Text keeps user-provided paths and strings from being interpreted as Rich markup.
+        table.add_row(name, Text(str(value)))
+
+
+class LoggingConfig(ConfigModel):
+    directory: ProjectPath = Field(default=Path("logs"), validate_default=True)
     level: str = "INFO"
     formatter: Literal["ColoredFormatter", "ContextualColorFormatter"] = "ColoredFormatter"
     date_format: str = "%d-%m-%Y %H:%M:%S"
@@ -20,30 +60,72 @@ class LoggingConfig(BaseModel):
     include_function: bool = True
     success_level: int = Field(default=69, ge=1)
 
-    @field_validator("directory")
-    @classmethod
-    def _under_project_root(cls, directory: Path) -> Path:
-        return PROJECT_ROOT / directory
+
+class DataConfig(ConfigModel):
+    competition_dir: ProjectPath = Field(default=Path("data/competition"), validate_default=True)
+    # Runs are written to a subfolder named after the run.
+    output_dir: ProjectPath = Field(default=Path("outputs"), validate_default=True)
 
 
-class Config(BaseSettings):
+class SplitConfig(ConfigModel):
+    validation_fraction: float = Field(default=0.2, gt=0, lt=1)
+    seed: int = Field(default=42, ge=0)
+    group_column: str | None = None
+    stratify: bool = False
+
+
+class TrackingConfig(ConfigModel):
+    project: str = "kaggle-experiments"
+    entity: str | None = None
+    offline: bool = True
+    api_key: SecretStr | None = None
+
+
+class RuntimeConfig(ConfigModel):
+    accelerator: Literal["auto", "cpu", "gpu"] = "auto"
+    devices: int | Literal["auto"] = "auto"
+    precision: Literal["auto", "32-true", "16-mixed", "bf16-mixed"] = "auto"
+
+
+class Config(BaseSettings, ConfigModel):
     model_config = SettingsConfigDict(
         env_file=PROJECT_ROOT / ".env",
-        env_prefix="APP_",
-        env_nested_delimiter="__",
         env_file_encoding="utf-8",
+        env_prefix="KS_",
+        env_nested_delimiter="__",
         extra="ignore",
     )
-
-    app_name: str = "app"
+    app_name: str = "kaggle_starter"
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    data: DataConfig = Field(default_factory=DataConfig)
+    split: SplitConfig = Field(default_factory=SplitConfig)
+    tracking: TrackingConfig = Field(default_factory=TrackingConfig)
+    runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
+
+    def safe_dump(self) -> dict:
+        """Never write auth tokens into experiment artifacts."""
+        return self.model_dump(mode="json", exclude={"tracking": {"api_key"}})
+
+
+def get_config[C: Config](
+    config_class: type[C] = Config, *, verbose: bool = True, **sections: Any
+) -> C:
+    """The settings from the environment; explicit `sections` take precedence over it.
+
+    Calls without sections reuse one cached instance per class, calls with sections build a new one.
+    """
+    config: C = config_class(**sections) if sections else _default_config(config_class)
+    if verbose:
+        config.show()
+    return config
 
 
 @lru_cache
-def get_config() -> Config:
-    return Config()
+def _default_config[C: Config](config_class: type[C]) -> C:
+    print(f"Loading default {config_class.__name__}...")
+    return config_class()
 
 
 if __name__ == "__main__":
     print(f"{PROJECT_ROOT=}")
-    pprint(get_config())
+    get_config(verbose=True)
