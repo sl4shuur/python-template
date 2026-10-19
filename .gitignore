@@ -11,7 +11,7 @@ __pycache__/
 .env
 .kaggle/
 # Data and artifacts
-data/
+/data/
 outputs/
 logs/
 build/
