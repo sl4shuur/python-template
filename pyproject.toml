@@ -43,7 +43,7 @@ dev = ["pytest>=8", "ruff>=0.8", "build>=1.2"]
 line-length = 100
 target-version = "py312"
 extend-exclude = [
-  "src/kaggle_starter/loggers/logging_formatters.py",
+  "src/kaggle_starter/loggers/*.py",
   "*.ipynb"
 ]
 
