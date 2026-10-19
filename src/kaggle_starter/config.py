@@ -99,7 +99,20 @@ class LRSchedulerConfig(ConfigModel):
     min_lr: float = Field(default=0.0, ge=0, allow_inf_nan=False)
     factor: float = Field(default=0.1, gt=0, lt=1)
     patience: int = Field(default=2, ge=0)
-    monitor: Literal["val/loss", "val/mrr_at_25"] = "val/loss"
+    monitor: str = "val/loss"
+    mode: Literal["min", "max"] = "min"
+
+
+class TrainConfig(ConfigModel):
+    max_epochs: int = Field(default=10, ge=1)
+    seed: int = Field(default=42, ge=0)
+    checkpoint_metric: str = "val/loss"
+    checkpoint_mode: Literal["min", "max"] = "min"
+    checkpoint_top_k: int = Field(default=1, ge=1)
+    early_stopping_patience: int = Field(default=3, ge=0)
+    accumulate_grad_batches: int = Field(default=1, ge=1)
+    gradient_clip_val: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+    log_every_n_steps: int = Field(default=10, ge=1)
 
 
 class RuntimeConfig(ConfigModel):
@@ -123,6 +136,7 @@ class Config(BaseSettings, ConfigModel):
     tracking: TrackingConfig = Field(default_factory=TrackingConfig)
     loader: LoaderConfig = Field(default_factory=LoaderConfig)
     lr_scheduler: LRSchedulerConfig = Field(default_factory=LRSchedulerConfig)
+    train: TrainConfig = Field(default_factory=TrainConfig)
     runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
 
     def safe_dump(self) -> dict:
