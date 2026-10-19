@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
-from app.config import LoggingConfig, get_config
+from app.config import LoggingConfig
 
 from .logging_formatters import EvalFileFormatter
 
@@ -12,10 +12,12 @@ from .logging_formatters import EvalFileFormatter
 def _attach_file_handler(
     logger: logging.Logger,
     name: str,
-    config: LoggingConfig,
     formatter: logging.Formatter | None = None,
+    *,
+    config: LoggingConfig,
 ) -> None:
     log_path = config.directory / f"{name}.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     if any(
         isinstance(h, logging.FileHandler) and h.baseFilename == str(log_path.resolve())
         for h in logger.handlers
@@ -24,8 +26,7 @@ def _attach_file_handler(
     handler = logging.FileHandler(log_path, encoding="utf-8")
     handler.setLevel(config.level)
     handler.setFormatter(
-        formatter
-        or logging.Formatter(
+        formatter or logging.Formatter(
             "%(asctime)s [%(levelname)s] %(message)s",
             datefmt=config.date_format,
         )
@@ -34,11 +35,10 @@ def _attach_file_handler(
 
 
 class CustomLogger(logging.LoggerAdapter):
-    def __init__(self, name: str = "app", config: LoggingConfig | None = None) -> None:
-        config = config or get_config().logging
+    def __init__(self, name: str = "app", *, config: LoggingConfig) -> None:
         underlying = logging.getLogger(name)
         super().__init__(underlying, extra={})
-        _attach_file_handler(underlying, name, config)
+        _attach_file_handler(underlying, name, config=config)
         self._success_level = config.success_level
 
     def success(self, message: str, *args: Any, **kwargs: Any) -> None:
@@ -54,8 +54,8 @@ class EvalLogger(logging.LoggerAdapter):
         _attach_file_handler(
             underlying,
             logger_name,
-            config,
             EvalFileFormatter(config.date_format),
+            config=config,
         )
 
         self._json_path = config.directory / "evaluation.json"

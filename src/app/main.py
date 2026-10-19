@@ -8,8 +8,8 @@ def run() -> int:
     """Run the application."""
     config = bootstrap()
 
-    logger = get_logger(CustomLogger, name=__name__)
-    eval_logger = get_logger(EvalLogger, config=config, name=__name__)
+    logger = get_logger(CustomLogger, name=__name__, config=config.logging)
+    eval_logger = get_logger(EvalLogger, name=__name__, config=config.logging)
 
     eval_logger.metric("example_metric", 0.5234)
     logger.success("This is a success message.")
