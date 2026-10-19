@@ -88,7 +88,7 @@ Application settings live in `src/kaggle_starter/config.py`; `.env.example` list
 | `experiment/` | Run orchestration, artifacts and optional resume state |
 | `runtime/`, `loggers/` | Platform defaults, hardware settings and logging |
 
-The model and experiment functions are scaffolds to implement for each competition. Folder READMEs describe where to put the remaining logic.
+`models/baseline/` contains a working Lightning regression example with checkpoints and resume; see [models/README.md](src/kaggle_starter/models/README.md) for its layout and commands. Adapt the data, model and metrics for each competition. The `experiment/` functions remain orchestration templates.
 
 ## Kaggle and Colab packages
 
