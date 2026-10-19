@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 class Candidate(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    # Higher ranks first. Only compared between candidates of one molecule.
+    # Higher ranks first
     score: float
 
     @field_validator("score")
@@ -39,13 +39,13 @@ class SplitManifest(BaseModel):
         if not self.dataset_id or not self.train_keys or not self.val_keys:
             raise ValueError("Dataset identity and both split partitions must be nonempty.")
         if set(self.train_keys) & set(self.val_keys):
-            raise ValueError("Train and validation structures overlap.")
+            raise ValueError("Train and validation groups overlap.")
         if len(set(self.train_keys)) != len(self.train_keys) or len(set(self.val_keys)) != len(
             self.val_keys
         ):
-            raise ValueError("Split structure keys must be unique.")
+            raise ValueError("Split group keys must be unique.")
         if self.train_rows < len(self.train_keys) or self.val_rows < len(self.val_keys):
-            raise ValueError("Each structure needs at least one spectrum.")
+            raise ValueError("Each group needs at least one row.")
         return self
 
     @property
