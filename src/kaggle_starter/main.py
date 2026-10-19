@@ -1,7 +1,7 @@
 """Application orchestration, independent of the command-line interface."""
 
-from app.bootstrap import bootstrap
-from app.loggers import CustomLogger, EvalLogger, get_logger
+from kaggle_starter.bootstrap import bootstrap
+from kaggle_starter.loggers import CustomLogger, EvalLogger, get_logger
 
 
 def run() -> int:

@@ -2,7 +2,7 @@
 
 import rich_click as click
 
-from app.main import run
+from kaggle_starter.main import run
 
 # Configure Rich-Click
 click.rich_click.TEXT_MARKUP = "rich"

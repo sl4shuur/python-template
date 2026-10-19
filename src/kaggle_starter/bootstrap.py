@@ -2,9 +2,9 @@
 
 from functools import lru_cache
 
-from app.config import Config, get_config
-from app.core.errors import ConfigurationError
-from app.loggers import apply_logging_config
+from kaggle_starter.config import Config, get_config
+from kaggle_starter.core.errors import ConfigurationError
+from kaggle_starter.loggers import apply_logging_config
 
 
 @lru_cache

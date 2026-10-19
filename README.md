@@ -61,7 +61,7 @@ See the [Astral uv docs](https://docs.astral.sh/uv/) for more installation optio
    # (macOS/Linux)
    source .venv/bin/activate
 
-   python -m app.cli
+   python -m kaggle_starter.cli
    ```
 
 5. To run a Jupyter notebook, ensure you have selected the correct Python kernel in your Jupyter environment. You can do this by opening the notebook and selecting the kernel that corresponds to your virtual environment.
