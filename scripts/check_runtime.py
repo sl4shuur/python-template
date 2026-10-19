@@ -1,0 +1,18 @@
+"""Optional PyTorch/Lightning hardware check. Install with --extra deep-learning."""
+
+from kaggle_starter.config import Config
+from kaggle_starter.runtime.hardware import resolve_runtime
+
+
+def main() -> None:
+    import lightning as L
+
+    cfg = resolve_runtime(Config().runtime)
+    trainer = L.Trainer(**cfg.model_dump(), logger=False, enable_checkpointing=False)
+    print(
+        f"{type(trainer.accelerator).__name__}; {trainer.num_devices} device(s); {trainer.precision}"
+    )
+
+
+if __name__ == "__main__":
+    main()

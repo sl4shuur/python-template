@@ -12,6 +12,7 @@ dependencies = [
   "pydantic>=2.7",
   "pydantic-settings>=2.5",
   "click>=8.1",
+  "rich>=15.0.0",
 ]
 
 [project.optional-dependencies]
@@ -35,6 +36,14 @@ constraint-dependencies = [
     # BEGIN kaggle-image-pins
     # END kaggle-image-pins
 ]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128"}
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.8", "build>=1.2"]
