@@ -81,6 +81,27 @@ class TrackingConfig(ConfigModel):
     api_key: SecretStr | None = None
 
 
+class LoaderConfig(ConfigModel):
+    batch_size: int = Field(default=128, ge=1)
+    val_batch_size: int = Field(default=32, ge=1)
+    predict_batch_size: int = Field(default=32, ge=1)
+    num_workers: int = Field(default=0, ge=0)
+    pin_memory: bool = False
+    seed: int = Field(default=0, ge=0)
+
+
+class LRSchedulerConfig(ConfigModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: Literal["none", "plateau", "cosine"] = "none"
+    # Both schedulers advance once per epoch; cosine's horizon stays fixed on resume.
+    t_max: int = Field(default=10, ge=1)
+    min_lr: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    factor: float = Field(default=0.1, gt=0, lt=1)
+    patience: int = Field(default=2, ge=0)
+    monitor: Literal["val/loss", "val/mrr_at_25"] = "val/loss"
+
+
 class RuntimeConfig(ConfigModel):
     accelerator: Literal["auto", "cpu", "gpu"] = "auto"
     devices: int | Literal["auto"] = "auto"
@@ -100,6 +121,8 @@ class Config(BaseSettings, ConfigModel):
     data: DataConfig = Field(default_factory=DataConfig)
     split: SplitConfig = Field(default_factory=SplitConfig)
     tracking: TrackingConfig = Field(default_factory=TrackingConfig)
+    loader: LoaderConfig = Field(default_factory=LoaderConfig)
+    lr_scheduler: LRSchedulerConfig = Field(default_factory=LRSchedulerConfig)
     runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
 
     def safe_dump(self) -> dict:
