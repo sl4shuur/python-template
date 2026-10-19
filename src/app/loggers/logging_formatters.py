@@ -29,7 +29,7 @@ EVAL_THRESHOLDS = [
 # fmt: on
 
 
-PACKAGE_ROOT = Path(__file__).resolve().parent.parent  # .../src/oppengine
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent  # .../src/app
 
 
 def _source_label(record: logging.LogRecord) -> str:

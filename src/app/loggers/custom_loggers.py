@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
-from app.config import Config, get_config
+from app.config import LoggingConfig, get_config
 
 from .logging_formatters import EvalFileFormatter
 
@@ -12,47 +12,54 @@ from .logging_formatters import EvalFileFormatter
 def _attach_file_handler(
     logger: logging.Logger,
     name: str,
+    config: LoggingConfig,
     formatter: logging.Formatter | None = None,
 ) -> None:
-    config = get_config()
-    log_path = config.logging.directory / f"{name}.log"
-    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path = config.directory / f"{name}.log"
     if any(
         isinstance(h, logging.FileHandler) and h.baseFilename == str(log_path.resolve())
         for h in logger.handlers
     ):
         return
     handler = logging.FileHandler(log_path, encoding="utf-8")
-    handler.setLevel(config.logging.level)
+    handler.setLevel(config.level)
     handler.setFormatter(
-        formatter or logging.Formatter(
+        formatter
+        or logging.Formatter(
             "%(asctime)s [%(levelname)s] %(message)s",
-            datefmt=config.logging.date_format,
+            datefmt=config.date_format,
         )
     )
     logger.addHandler(handler)
 
 
 class CustomLogger(logging.LoggerAdapter):
-    def __init__(self, name: str = "app") -> None:
+    def __init__(self, name: str = "app", config: LoggingConfig | None = None) -> None:
+        config = config or get_config().logging
         underlying = logging.getLogger(name)
         super().__init__(underlying, extra={})
-        _attach_file_handler(underlying, name)
+        _attach_file_handler(underlying, name, config)
+        self._success_level = config.success_level
 
     def success(self, message: str, *args: Any, **kwargs: Any) -> None:
         kwargs.setdefault("stacklevel", 2)
-        self.logger.log(get_config().logging.success_level, message, *args, **kwargs)
+        self.logger.log(self._success_level, message, *args, **kwargs)
 
 
 class EvalLogger(logging.LoggerAdapter):
-    def __init__(self, config: Config, name: str = "eval") -> None:
+    def __init__(self, config: LoggingConfig, name: str = "eval") -> None:
         logger_name = name if name == "eval" or name.startswith("eval.") else f"eval.{name}"
         underlying = logging.getLogger(logger_name)
         super().__init__(underlying, {})
-        _attach_file_handler(underlying, logger_name, EvalFileFormatter(config.logging.date_format))
+        _attach_file_handler(
+            underlying,
+            logger_name,
+            config,
+            EvalFileFormatter(config.date_format),
+        )
 
-        self._json_path = config.logging.directory / "evaluation.json"
-        self._run_id = datetime.now().strftime(config.logging.date_format)
+        self._json_path = config.directory / "evaluation.json"
+        self._run_id = datetime.now().strftime(config.date_format)
 
     def process(
         self,
@@ -69,7 +76,7 @@ class EvalLogger(logging.LoggerAdapter):
         return msg, kwargs
 
     def metric(self, label: str, score: float) -> None:
-        self.info("%s: %.4f", label, score, extra={"score": score}, stacklevel=2)
+        self.info(f"{label}: {score:.4f}", extra={"score": score}, stacklevel=2)
 
     def flush_json(
         self,
