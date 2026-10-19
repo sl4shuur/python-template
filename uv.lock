@@ -961,6 +961,7 @@ dependencies = [
 deep-learning = [
     { name = "lightning" },
     { name = "torch" },
+    { name = "wandb" },
 ]
 notebooks = [
     { name = "ipykernel" },
@@ -969,9 +970,6 @@ notebooks = [
 ]
 parquet = [
     { name = "pyarrow" },
-]
-tracking = [
-    { name = "wandb" },
 ]
 
 [package.dev-dependencies]
@@ -986,7 +984,7 @@ requires-dist = [
     { name = "ipykernel", marker = "extra == 'notebooks'", specifier = ">=6" },
     { name = "ipywidgets", marker = "extra == 'notebooks'", specifier = ">=8" },
     { name = "joblib", specifier = ">=1.4" },
-    { name = "lightning", marker = "extra == 'deep-learning'", specifier = ">=2.4" },
+    { name = "lightning", marker = "extra == 'deep-learning'", specifier = ">=2.6" },
     { name = "nbformat", marker = "extra == 'notebooks'", specifier = ">=5" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", specifier = ">=2.0" },
@@ -996,10 +994,10 @@ requires-dist = [
     { name = "rich", specifier = ">=13.9" },
     { name = "rich-click", specifier = ">=1.9.7" },
     { name = "scikit-learn", specifier = ">=1.5" },
-    { name = "torch", marker = "extra == 'deep-learning'", specifier = ">=2.4", index = "https://download.pytorch.org/whl/cu128" },
-    { name = "wandb", marker = "extra == 'tracking'", specifier = ">=0.17" },
+    { name = "torch", marker = "extra == 'deep-learning'", specifier = ">=2.11", index = "https://download.pytorch.org/whl/cu128" },
+    { name = "wandb", marker = "extra == 'deep-learning'", specifier = ">=0.31.0" },
 ]
-provides-extras = ["parquet", "notebooks", "tracking", "deep-learning"]
+provides-extras = ["parquet", "notebooks", "deep-learning"]
 
 [package.metadata.requires-dev]
 dev = [

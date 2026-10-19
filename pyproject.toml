@@ -18,8 +18,7 @@ dependencies = [
 [project.optional-dependencies]
 parquet = ["pyarrow>=15"]
 notebooks = ["ipykernel>=6", "ipywidgets>=8", "nbformat>=5"]
-tracking = ["wandb>=0.17"]
-deep-learning = ["torch>=2.4", "lightning>=2.4"]
+deep-learning = ["torch>=2.11", "lightning>=2.6", "wandb>=0.31.0"]
 
 [build-system]
 requires = ["hatchling"]
